@@ -44,7 +44,7 @@ module-sdk/    SDK for module authors (headers mirrored from include/rmm/)
 sfi/           SFI runtime scaffolding
 
 shim/          include-path compatibility only (forwarding headers):
-               zero duplicated content; new code includes arch headers
+               zero duplicated content, new code includes arch headers
                directly
 ```
 
