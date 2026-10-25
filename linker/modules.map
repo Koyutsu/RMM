@@ -1,0 +1,93 @@
+# modules.map - authoritative description of every RMM module
+#
+# Rules enforced by the generator:
+# * base % size == 0 and size is a power of two
+# * slots never overlap
+# * dependency graph is a DAG
+# * the loader's own dependency closure (core) may not
+# depend on a demand-loaded module
+
+kernel_arch = x86_64
+abi_version = 1
+
+# Core (resident -)
+# The core kernel is the identity-mapped image at physical 1 MiB.  It hosts
+# the trampoline region (fixed VA in PML4[510]) and owns the recovery stacks.
+module core {
+    base   = 0x0000000000000000;   # identity window (physical == virtual)
+    size   = 0x02000000;           # 32 MiB - image + tramp + archive + abi
+    type   = resident;
+    class  = CORE;
+}
+
+# Trampoline region: generated per-export stubs at deterministic addresses.
+# Lives in the identity map near the core so core->stub calls stay rel32;
+# modules reach stubs through generated in-slot veneers (movabs+jmp).
+region tramp {
+    base = 0x0000000000E00000;     # identity, 256 KiB, 256 B per stub
+    size = 0x00040000;
+    type = resident;
+    class = CORE;
+}
+
+# Demand-loaded modules
+
+module drv_bus {
+    base   = 0xFFFFFF8030000000;
+    size   = 0x01000000;           # 16 MiB
+    image  = "drv_bus.rmm";
+    deps   = [core];
+    class  = TRUSTED;
+    replaceable = false;
+}
+
+module drv_gfx {
+    base   = 0xFFFFFF8040000000;
+    size   = 0x01000000;           # 16 MiB
+    image  = "drv_gfx.rmm";
+    deps   = [core, drv_bus];
+    class  = TRUSTED;
+    replaceable = false;
+}
+
+module drv_input {
+    base   = 0xFFFFFF8050000000;
+    size   = 0x01000000;           # 16 MiB
+    image  = "drv_input.rmm";
+    deps   = [core];
+    class  = TRUSTED;
+    replaceable = false;
+}
+
+module fs {
+    base   = 0xFFFFFF8010000000;
+    size   = 0x02000000;           # 32 MiB
+    image  = "fs.rmm";
+    deps   = [core, drv_bus, drv_gfx, drv_input];
+    class  = TRUSTED;
+    replaceable = false;
+}
+
+# Reserved for Stage 8 (scheduler hot-swap). Not built yet: the
+# core's bootstrap scheduler runs.
+module sched {
+    base   = 0xFFFFFF8060000000;
+    size   = 0x01000000;           # 16 MiB
+    image  = "sched.rmm";
+    deps   = [core];
+    class  = TRUSTED;
+    replaceable = true;
+    optional = true;
+}
+
+# Reserved for the future network stack. Absent in this build -> costs
+# zero RAM (the whole point of demand loading).
+module net {
+    base   = 0xFFFFFF8070000000;
+    size   = 0x01000000;           # 16 MiB
+    image  = "net.rmm";
+    deps   = [core, fs];
+    class  = TRUSTED;
+    replaceable = true;
+    optional = true;
+}

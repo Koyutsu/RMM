@@ -53,3 +53,18 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# build output and local files
+build/
+*.bin
+*.iso
+*.cpio
+*.nm
+*.log
+generated/
+offsets_probe/
+core1.elf
+core2.elf
+
+# the module manifest is source, not a linker map
+!linker/modules.map
