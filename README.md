@@ -1,6 +1,6 @@
 # RMM
 
-RMM (Recoverable Modular Monolithic Kernel), version 2.
+RMM (Recoverable Modular Monolithic Kernel)
 
 Drivers and filesystems run as modules in fixed slots of
 the kernel address space. They are loaded on demand and called through
